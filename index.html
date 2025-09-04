@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor de Juego Rítmico</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: white;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 10px;
+        }
+        
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+        }
+        
+        #gameCanvas {
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        button {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:hover {
+            background: #ff8e8e;
+            transform: translateY(-2px);
+        }
+        
+        #startBtn {
+            background: #4CAF50;
+        }
+        
+        #startBtn:hover {
+            background: #66BB6A;
+        }
+        
+        #tapBtn {
+            background: #2196F3;
+            font-size: 20px;
+            padding: 20px 40px;
+        }
+        
+        #tapBtn:hover {
+            background: #42A5F5;
+        }
+        
+        .timer {
+            font-size: 32px;
+            font-weight: bold;
+            margin: 15px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            max-width: 500px;
+        }
+        
+        .timeline {
+            width: 100%;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+            margin: 15px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .timeline-marker {
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            background: #ff6b6b;
+            top: 0;
+        }
+        
+        .timeline-progress {
+            height: 100%;
+            width: 0%;
+            background: rgba(255, 107, 107, 0.3);
+            border-radius: 10px;
+        }
+        
+        .data-display {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        .beat {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: #ff6b6b;
+            border-radius: 50%;
+            margin: 5px;
+            animation: pulse 0.5s;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); }
+            100% { transform: scale(1); }
+        }
+        
+        @media (max-width: 600px) {
+            button {
+                padding: 15px 20px;
+                font-size: 14px;
+            }
+            
+            #tapBtn {
+                padding: 25px 50px;
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Editor de Juego Rítmico</h1>
+        
+        <div class="instructions">
+            <p>Presiona la tecla <strong>X</strong> o el botón azul al ritmo de la música</p>
+            <p>Tiempos registrados: <span id="beatCount">0</span></p>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn">Empezar</button>
+            <button id="resetBtn">Reiniciar</button>
+            <button id="exportBtn">Exportar Datos</button>
+        </div>
+        
+        <div class="timer" id="timer">00:00:00</div>
+        
+        <div class="timeline">
+            <div class="timeline-progress" id="timelineProgress"></div>
+        </div>
+        
+        <canvas id="gameCanvas" width="700" height="400"></canvas>
+        
+        <button id="tapBtn">TOCAR (X)</button>
+        
+        <div class="data-display" id="timeData">
+            Los tiempos registrados aparecerán aquí...
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let startTime = 0;
+        let isRunning = false;
+        let recordedTimes = [];
+        let animationId = null;
+        let currentTime = 0;
+        
+        // Elementos del DOM
+        const timerElement = document.getElementById('timer');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const tapBtn = document.getElementById('tapBtn');
+        const timeDataElement = document.getElementById('timeData');
+        const beatCountElement = document.getElementById('beatCount');
+        const timelineProgress = document.getElementById('timelineProgress');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Inicializar
+        function init() {
+            startBtn.addEventListener('click', startTimer);
+            resetBtn.addEventListener('click', resetTimer);
+            exportBtn.addEventListener('click', exportData);
+            tapBtn.addEventListener('click', recordTime);
+            
+            // Escuchar la tecla X
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'x' || e.key === 'X') {
+                    recordTime();
+                }
+            });
+            
+            drawStaticCanvas();
+        }
+        
+        // Dibujar canvas estático inicial
+        function drawStaticCanvas() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.font = '24px Arial';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.fillText('Presiona "Empezar" para iniciar', canvas.width / 2, canvas.height / 2);
+        }
+        
+        // Iniciar el temporizador
+        function startTimer() {
+            if (!isRunning) {
+                isRunning = true;
+                startTime = Date.now() - currentTime;
+                startBtn.textContent = 'Pausar';
+                recordedTimes = [];
+                updateTimeDataDisplay();
+                animationId = requestAnimationFrame(updateTimer);
+            } else {
+                isRunning = false;
+                startBtn.textContent = 'Continuar';
+                cancelAnimationFrame(animationId);
+            }
+        }
+        
+        // Reiniciar el temporizador
+        function resetTimer() {
+            isRunning = false;
+            currentTime = 0;
+            recordedTimes = [];
+            startBtn.textContent = 'Empezar';
+            cancelAnimationFrame(animationId);
+            updateTimerDisplay();
+            updateTimeDataDisplay();
+            drawStaticCanvas();
+            timelineProgress.style.width = '0%';
+        }
+        
+        // Actualizar el temporizador
+        function updateTimer() {
+            if (isRunning) {
+                currentTime = Date.now() - startTime;
+                updateTimerDisplay();
+                
+                // Actualizar línea de tiempo
+                const progress = (currentTime % 10000) / 10000 * 100;
+                timelineProgress.style.width = `${progress}%`;
+                
+                // Dibujar en el canvas
+                drawCanvas();
+                
+                animationId = requestAnimationFrame(updateTimer);
+            }
+        }
+        
+        // Actualizar la visualización del temporizador
+        function updateTimerDisplay() {
+            const milliseconds = currentTime % 1000;
+            const seconds = Math.floor((currentTime / 1000) % 60);
+            const minutes = Math.floor((currentTime / (1000 * 60)) % 60);
+            
+            timerElement.textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}:${Math.floor(milliseconds/10).toString().padStart(2, '0')}`;
+        }
+        
+        // Registrar un tiempo
+        function recordTime() {
+            if (isRunning) {
+                recordedTimes.push(currentTime);
+                updateTimeDataDisplay();
+                
+                // Efecto visual en el botón
+                tapBtn.classList.add('active');
+                setTimeout(() => tapBtn.classList.remove('active'), 100);
+                
+                // Dibujar un círculo en el canvas
+                drawBeat();
+            }
+        }
+        
+        // Dibujar un beat en el canvas
+        function drawBeat() {
+            const x = Math.random() * (canvas.width - 100) + 50;
+            const y = Math.random() * (canvas.height - 100) + 50;
+            const size = Math.random() * 30 + 20;
+            
+            ctx.fillStyle = 'rgba(255, 107, 107, 0.7)';
+            ctx.beginPath();
+            ctx.arc(x, y, size, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Añadir elemento visual en la línea de tiempo
+            const marker = document.createElement('div');
+            marker.className = 'timeline-marker';
+            marker.style.left = `${(currentTime % 10000) / 10000 * 100}%`;
+            document.querySelector('.timeline').appendChild(marker);
+            
+            // Eliminar después de un tiempo
+            setTimeout(() => {
+                if (marker.parentNode) {
+                    marker.parentNode.removeChild(marker);
+                }
+            }, 2000);
+        }
+        
+        // Dibujar en el canvas
+        function drawCanvas() {
+            // Fondo semitransparente para efecto de estela
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Dibujar círculos de beats
+            const current = currentTime;
+            recordedTimes.forEach(time => {
+                const elapsed = current - time;
+                if (elapsed < 2000) { // Mostrar por 2 segundos
+                    const progress = elapsed / 2000;
+                    const size = 30 * (1 - progress);
+                    const alpha = 0.7 * (1 - progress);
+                    
+                    const x = canvas.width / 2;
+                    const y = canvas.height / 2;
+                    
+                    ctx.fillStyle = `rgba(255, 107, 107, ${alpha})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            });
+            
+            // Dibujar texto de instrucción
+            ctx.font = '20px Arial';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.fillText('Presiona X o el botón para marcar el ritmo', canvas.width / 2, 30);
+        }
+        
+        // Actualizar la visualización de datos de tiempo
+        function updateTimeDataDisplay() {
+            beatCountElement.textContent = recordedTimes.length;
+            
+            if (recordedTimes.length === 0) {
+                timeDataElement.innerHTML = 'Los tiempos registrados aparecerán aquí...';
+                return;
+            }
+            
+            let html = '<div style="margin-bottom: 10px;"><strong>Tiempos registrados (ms):</strong></div>';
+            html += '<div style="display: flex; flex-wrap: wrap; gap: 5px;">';
+            
+            recordedTimes.forEach((time, index) => {
+                const seconds = (time / 1000).toFixed(2);
+                html += `<span class="beat" title="${seconds}s"></span>`;
+                if (index > 0 && index % 20 === 0) html += '<br>';
+            });
+            
+            html += '</div>';
+            html += `<div style="margin-top: 10px;">Total: ${recordedTimes.length} beats</div>`;
+            
+            timeDataElement.innerHTML = html;
+        }
+        
+        // Exportar datos
+        function exportData() {
+            if (recordedTimes.length === 0) {
+                alert('No hay datos para exportar');
+                return;
+            }
+            
+            const dataStr = JSON.stringify(recordedTimes, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = 'ritmo_datos.json';
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+        
+        // Iniciar la aplicación cuando se cargue la página
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
