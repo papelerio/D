@@ -3,58 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor de Juego Rítmico</title>
+    <title>Ritmo Perfecto - Editor y Jugador</title>
     <style>
-        body {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            justify-content: center;
             color: white;
-            min-height: 100vh;
-            margin: 0;
             padding: 20px;
-        }
-        
-        h1 {
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            margin-bottom: 10px;
+            overflow-x: hidden;
         }
         
         .container {
+            width: 100%;
+            max-width: 800px;
             display: flex;
             flex-direction: column;
             align-items: center;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+        
+        .tabs {
+            display: flex;
             width: 100%;
-            max-width: 800px;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        
+        .tab.active {
+            background: rgba(255, 107, 107, 0.7);
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            width: 100%;
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .score-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 15px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 90px;
+            flex: 1;
+            margin: 0 5px;
+        }
+        
+        .score-title {
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .score-value {
+            font-size: 1.5rem;
+            font-weight: bold;
         }
         
         #gameCanvas {
             background-color: rgba(0, 0, 0, 0.7);
             border-radius: 10px;
-            margin: 20px 0;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+            margin: 15px 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 100%;
+            touch-action: none;
+        }
+        
+        .hit-line {
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            background: white;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.7);
         }
         
         .controls {
             display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 10px;
+            margin: 15px 0;
             flex-wrap: wrap;
             justify-content: center;
+            width: 100%;
         }
         
         button {
             background: #ff6b6b;
             color: white;
             border: none;
-            padding: 12px 25px;
+            padding: 12px 20px;
             border-radius: 50px;
             font-size: 16px;
             cursor: pointer;
             transition: all 0.3s;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            flex: 1;
+            min-width: 120px;
         }
         
         button:hover {
@@ -70,21 +153,12 @@
             background: #66BB6A;
         }
         
-        #tapBtn {
+        #recordBtn {
             background: #2196F3;
-            font-size: 20px;
-            padding: 20px 40px;
         }
         
-        #tapBtn:hover {
+        #recordBtn:hover {
             background: #42A5F5;
-        }
-        
-        .timer {
-            font-size: 32px;
-            font-weight: bold;
-            margin: 15px 0;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
         
         .instructions {
@@ -93,161 +167,412 @@
             border-radius: 10px;
             margin: 15px 0;
             text-align: center;
-            max-width: 500px;
+            width: 100%;
         }
         
-        .timeline {
+        .key-container {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
             width: 100%;
-            height: 40px;
-            background: rgba(0, 0, 0, 0.5);
+        }
+        
+        .key {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.7rem;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.1s;
+            user-select: none;
+            touch-action: none;
+        }
+        
+        .key.pressed {
+            transform: scale(0.95);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #64b5f6, #42a5f5);
+        }
+        
+        .accuracy-display {
+            position: absolute;
+            font-size: 1.5rem;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+        }
+        
+        .combo {
+            font-size: 1.2rem;
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .file-upload {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
             border-radius: 10px;
             margin: 15px 0;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .timeline-marker {
-            position: absolute;
-            width: 4px;
-            height: 100%;
-            background: #ff6b6b;
-            top: 0;
-        }
-        
-        .timeline-progress {
-            height: 100%;
-            width: 0%;
-            background: rgba(255, 107, 107, 0.3);
-            border-radius: 10px;
-        }
-        
-        .data-display {
-            background: rgba(0, 0, 0, 0.5);
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            max-height: 200px;
-            overflow-y: auto;
+            text-align: center;
             width: 100%;
-            box-sizing: border-box;
         }
         
-        .beat {
+        .file-upload input {
+            display: none;
+        }
+        
+        .file-upload label {
+            background: #9C27B0;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
             display: inline-block;
-            width: 10px;
-            height: 10px;
-            background: #ff6b6b;
-            border-radius: 50%;
-            margin: 5px;
-            animation: pulse 0.5s;
+            transition: background 0.3s;
+            margin-top: 10px;
         }
         
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.5); }
-            100% { transform: scale(1); }
+        .file-upload label:hover {
+            background: #AB47BC;
+        }
+        
+        .level-info {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            text-align: center;
+            width: 100%;
         }
         
         @media (max-width: 600px) {
-            button {
-                padding: 15px 20px;
-                font-size: 14px;
+            h1 {
+                font-size: 1.8rem;
             }
             
-            #tapBtn {
-                padding: 25px 50px;
-                font-size: 18px;
+            .score-box {
+                padding: 8px 10px;
+                min-width: 70px;
+            }
+            
+            .score-title {
+                font-size: 0.8rem;
+            }
+            
+            .score-value {
+                font-size: 1.3rem;
+            }
+            
+            button {
+                padding: 12px 15px;
+                font-size: 14px;
+                min-width: 100px;
+            }
+            
+            .key {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+            
+            .tab {
+                padding: 12px 8px;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 400px) {
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+                max-width: 250px;
+            }
+            
+            .tabs {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Editor de Juego Rítmico</h1>
+        <h1>Ritmo Perfecto</h1>
         
-        <div class="instructions">
-            <p>Presiona la tecla <strong>X</strong> o el botón azul al ritmo de la música</p>
-            <p>Tiempos registrados: <span id="beatCount">0</span></p>
+        <div class="tabs">
+            <div class="tab active" data-tab="player">JUGADOR</div>
+            <div class="tab" data-tab="editor">EDITOR</div>
         </div>
         
-        <div class="controls">
-            <button id="startBtn">Empezar</button>
-            <button id="resetBtn">Reiniciar</button>
-            <button id="exportBtn">Exportar Datos</button>
+        <!-- Contenido del Jugador -->
+        <div class="tab-content active" id="player-tab">
+            <div class="file-upload">
+                <h3>Importar Nivel</h3>
+                <p>Carga un archivo JSON con los tiempos de beats</p>
+                <input type="file" id="jsonFile" accept=".json">
+                <label for="jsonFile">Seleccionar Archivo JSON</label>
+                <div id="fileName" class="level-info">No se ha cargado ningún archivo</div>
+            </div>
+            
+            <div class="score-container">
+                <div class="score-box">
+                    <div class="score-title">PUNTUACIÓN</div>
+                    <div id="score" class="score-value">0</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-title">PRECISIÓN</div>
+                    <div id="accuracy" class="score-value">100%</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-title">COMBO</div>
+                    <div id="combo" class="score-value">0</div>
+                </div>
+            </div>
+            
+            <div class="hit-line" style="top: 50%;"></div>
+            <canvas id="gameCanvas" width="700" height="400"></canvas>
+            
+            <div class="instructions">
+                <p>Presiona la tecla <strong>X</strong> o toca la pantalla cuando los círculos lleguen a la línea central</p>
+            </div>
+            
+            <div class="key-container">
+                <div class="key" id="key">X</div>
+            </div>
+            
+            <div class="controls">
+                <button id="startBtn">Comenzar Juego</button>
+                <button id="resetBtn">Reiniciar</button>
+            </div>
+            
+            <div id="comboText" class="combo"></div>
         </div>
         
-        <div class="timer" id="timer">00:00:00</div>
-        
-        <div class="timeline">
-            <div class="timeline-progress" id="timelineProgress"></div>
-        </div>
-        
-        <canvas id="gameCanvas" width="700" height="400"></canvas>
-        
-        <button id="tapBtn">TOCAR (X)</button>
-        
-        <div class="data-display" id="timeData">
-            Los tiempos registrados aparecerán aquí...
+        <!-- Contenido del Editor -->
+        <div class="tab-content" id="editor-tab">
+            <div class="instructions">
+                <h3>Editor de Niveles</h3>
+                <p>Graba tus propios patrones rítmicos para crear niveles personalizados</p>
+            </div>
+            
+            <div class="score-container">
+                <div class="score-box">
+                    <div class="score-title">TIEMPO</div>
+                    <div id="editorTimer" class="score-value">00:00:00</div>
+                </div>
+                <div class="score-box">
+                    <div class="score-title">BEATS</div>
+                    <div id="beatCount" class="score-value">0</div>
+                </div>
+            </div>
+            
+            <canvas id="editorCanvas" width="700" height="300"></canvas>
+            
+            <div class="controls">
+                <button id="recordBtn">Comenzar Grabación</button>
+                <button id="saveBtn">Guardar Nivel</button>
+            </div>
+            
+            <div class="key-container">
+                <div class="key" id="editorKey">X</div>
+            </div>
+            
+            <div class="instructions">
+                <p>Presiona la tecla <strong>X</strong> o el botón azul al ritmo que deseas grabar</p>
+                <p>Los beats registrados: <span id="beatsList">Ninguno</span></p>
+            </div>
         </div>
     </div>
 
     <script>
-        // Variables globales
+        // Variables del juego
+        let score = 0;
+        let combo = 0;
+        let maxCombo = 0;
+        let accuracy = 100;
+        let totalHits = 0;
+        let successfulHits = 0;
         let startTime = 0;
         let isRunning = false;
-        let recordedTimes = [];
         let animationId = null;
-        let currentTime = 0;
+        let rhythmPoints = [];
+        let currentBeatIndex = 0;
+        let currentTab = 'player';
+        
+        // Variables del editor
+        let isRecording = false;
+        let recordStartTime = 0;
+        let recordedBeats = [];
+        let editorAnimationId = null;
         
         // Elementos del DOM
-        const timerElement = document.getElementById('timer');
+        const scoreElement = document.getElementById('score');
+        const accuracyElement = document.getElementById('accuracy');
+        const comboElement = document.getElementById('combo');
+        const comboTextElement = document.getElementById('comboText');
         const startBtn = document.getElementById('startBtn');
         const resetBtn = document.getElementById('resetBtn');
-        const exportBtn = document.getElementById('exportBtn');
-        const tapBtn = document.getElementById('tapBtn');
-        const timeDataElement = document.getElementById('timeData');
-        const beatCountElement = document.getElementById('beatCount');
-        const timelineProgress = document.getElementById('timelineProgress');
+        const keyElement = document.getElementById('key');
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         
-        // Inicializar
+        // Elementos del editor
+        const editorTimerElement = document.getElementById('editorTimer');
+        const beatCountElement = document.getElementById('beatCount');
+        const recordBtn = document.getElementById('recordBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const editorKeyElement = document.getElementById('editorKey');
+        const editorCanvas = document.getElementById('editorCanvas');
+        const editorCtx = editorCanvas.getContext('2d');
+        const beatsListElement = document.getElementById('beatsList');
+        const jsonFileInput = document.getElementById('jsonFile');
+        const fileNameElement = document.getElementById('fileName');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // Inicializar el juego
         function init() {
-            startBtn.addEventListener('click', startTimer);
-            resetBtn.addEventListener('click', resetTimer);
-            exportBtn.addEventListener('click', exportData);
-            tapBtn.addEventListener('click', recordTime);
+            // Configurar event listeners del jugador
+            startBtn.addEventListener('click', startGame);
+            resetBtn.addEventListener('click', resetGame);
             
             // Escuchar la tecla X
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'x' || e.key === 'X') {
-                    recordTime();
+                    if (currentTab === 'player' && isRunning) {
+                        handleKeyPress();
+                    } else if (currentTab === 'editor' && isRecording) {
+                        handleEditorKeyPress();
+                    }
                 }
             });
             
-            drawStaticCanvas();
-        }
-        
-        // Dibujar canvas estático inicial
-        function drawStaticCanvas() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Para dispositivos táctiles
+            keyElement.addEventListener('mousedown', () => {
+                if (currentTab === 'player' && isRunning) handleKeyPress();
+            });
+            keyElement.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (currentTab === 'player' && isRunning) handleKeyPress();
+            });
             
-            ctx.font = '24px Arial';
-            ctx.fillStyle = 'white';
-            ctx.textAlign = 'center';
-            ctx.fillText('Presiona "Empezar" para iniciar', canvas.width / 2, canvas.height / 2);
+            editorKeyElement.addEventListener('mousedown', () => {
+                if (currentTab === 'editor' && isRecording) handleEditorKeyPress();
+            });
+            editorKeyElement.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (currentTab === 'editor' && isRecording) handleEditorKeyPress();
+            });
+            
+            // Configurar pestañas
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabName = tab.getAttribute('data-tab');
+                    switchTab(tabName);
+                });
+            });
+            
+            // Configurar editor
+            recordBtn.addEventListener('click', toggleRecording);
+            saveBtn.addEventListener('click', saveLevel);
+            
+            // Configurar carga de archivos
+            jsonFileInput.addEventListener('change', handleFileUpload);
+            
+            // Ajustar tamaños de canvas para móviles
+            resizeCanvases();
+            window.addEventListener('resize', resizeCanvases);
+            
+            drawStaticCanvas();
+            drawStaticEditorCanvas();
         }
         
-        // Iniciar el temporizador
-        function startTimer() {
+        // Cambiar entre pestañas
+        function switchTab(tabName) {
+            currentTab = tabName;
+            
+            // Actualizar pestañas activas
+            tabs.forEach(tab => {
+                if (tab.getAttribute('data-tab') === tabName) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            // Actualizar contenido visible
+            tabContents.forEach(content => {
+                if (content.id === `${tabName}-tab`) {
+                    content.classList.add('active');
+                } else {
+                    content.classList.remove('active');
+                }
+            });
+            
+            // Detener cualquier animación en curso
+            if (tabName !== 'player' && isRunning) {
+                resetGame();
+            }
+            
+            if (tabName !== 'editor' && isRecording) {
+                toggleRecording();
+            }
+        }
+        
+        // Ajustar canvas para dispositivos móviles
+        function resizeCanvases() {
+            const isMobile = window.innerWidth <= 600;
+            
+            // Ajustar canvas del jugador
+            canvas.width = isMobile ? window.innerWidth - 40 : 700;
+            canvas.height = isMobile ? 300 : 400;
+            
+            // Ajustar canvas del editor
+            editorCanvas.width = isMobile ? window.innerWidth - 40 : 700;
+            editorCanvas.height = isMobile ? 250 : 300;
+            
+            // Redibujar si es necesario
+            if (!isRunning) {
+                drawStaticCanvas();
+            }
+            
+            if (!isRecording) {
+                drawStaticEditorCanvas();
+            }
+        }
+        
+        // Iniciar el juego
+        function startGame() {
+            if (rhythmPoints.length === 0) {
+                alert('No hay datos de nivel. Por favor, importa un archivo JSON primero.');
+                return;
+            }
+            
             if (!isRunning) {
                 isRunning = true;
-                startTime = Date.now() - currentTime;
+                startTime = Date.now();
+                currentBeatIndex = 0;
+                score = 0;
+                combo = 0;
+                maxCombo = 0;
+                accuracy = 100;
+                totalHits = 0;
+                successfulHits = 0;
+                
+                updateUI();
+                
                 startBtn.textContent = 'Pausar';
-                recordedTimes = [];
-                updateTimeDataDisplay();
-                animationId = requestAnimationFrame(updateTimer);
+                animationId = requestAnimationFrame(gameLoop);
             } else {
                 isRunning = false;
                 startBtn.textContent = 'Continuar';
@@ -255,158 +580,429 @@
             }
         }
         
-        // Reiniciar el temporizador
-        function resetTimer() {
+        // Reiniciar el juego
+        function resetGame() {
             isRunning = false;
-            currentTime = 0;
-            recordedTimes = [];
-            startBtn.textContent = 'Empezar';
+            startBtn.textContent = 'Comenzar Juego';
             cancelAnimationFrame(animationId);
-            updateTimerDisplay();
-            updateTimeDataDisplay();
+            currentBeatIndex = 0;
             drawStaticCanvas();
-            timelineProgress.style.width = '0%';
         }
         
-        // Actualizar el temporizador
-        function updateTimer() {
-            if (isRunning) {
-                currentTime = Date.now() - startTime;
-                updateTimerDisplay();
+        // Bucle principal del juego
+        function gameLoop() {
+            if (!isRunning) return;
+            
+            const currentTime = Date.now() - startTime;
+            
+            // Actualizar posición de los beats
+            updateBeats(currentTime);
+            
+            // Dibujar el juego
+            drawGame(currentTime);
+            
+            // Verificar si el juego ha terminado
+            if (currentBeatIndex >= rhythmPoints.length && currentTime > rhythmPoints[rhythmPoints.length - 1].time + 1000) {
+                endGame();
+                return;
+            }
+            
+            animationId = requestAnimationFrame(gameLoop);
+        }
+        
+        // Actualizar la posición de los beats
+        function updateBeats(currentTime) {
+            const approachTime = 2000; // 2 segundos para acercarse
+            
+            for (let i = currentBeatIndex; i < rhythmPoints.length; i++) {
+                const point = rhythmPoints[i];
                 
-                // Actualizar línea de tiempo
-                const progress = (currentTime % 10000) / 10000 * 100;
-                timelineProgress.style.width = `${progress}%`;
+                // Si el beat está por llegar
+                if (currentTime >= point.time - approachTime && point.state === 'approaching') {
+                    point.y = ((currentTime - (point.time - approachTime)) / approachTime) * (canvas.height / 2);
+                }
                 
-                // Dibujar en el canvas
-                drawCanvas();
+                // Si el beat ha pasado el punto de hit
+                if (currentTime > point.time + 300 && point.state === 'approaching') {
+                    point.state = 'missed';
+                    combo = 0;
+                    updateComboText("¡Fallaste!");
+                    currentBeatIndex = i + 1;
+                }
                 
-                animationId = requestAnimationFrame(updateTimer);
+                // Si el beat está en el futuro, salir del bucle
+                if (currentTime < point.time - approachTime) {
+                    break;
+                }
             }
         }
         
-        // Actualizar la visualización del temporizador
-        function updateTimerDisplay() {
+        // Dibujar el juego
+        function drawGame(currentTime) {
+            // Limpiar el canvas
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Dibujar línea central
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(0, canvas.height / 2);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+            
+            // Dibujar beats
+            rhythmPoints.forEach(point => {
+                if (point.state === 'approaching') {
+                    const size = 30 - (point.y / (canvas.height / 2)) * 15;
+                    
+                    // Color gradual según se acerca
+                    const green = Math.max(0, 255 - (point.y / (canvas.height / 2)) * 255);
+                    const red = (point.y / (canvas.height / 2)) * 255;
+                    ctx.fillStyle = `rgb(${red}, ${green}, 100)`;
+                    
+                    ctx.beginPath();
+                    ctx.arc(canvas.width / 2, canvas.height / 2 - point.y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.strokeStyle = 'white';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                } else if (point.state === 'hit') {
+                    // Efecto de hit
+                    const elapsed = currentTime - point.hitTime;
+                    if (elapsed < 300) {
+                        const alpha = 1 - (elapsed / 300);
+                        const size = 30 + (elapsed / 300) * 50;
+                        
+                        ctx.strokeStyle = `rgba(0, 255, 100, ${alpha})`;
+                        ctx.lineWidth = 3;
+                        ctx.beginPath();
+                        ctx.arc(canvas.width / 2, canvas.height / 2, size, 0, Math.PI * 2);
+                        ctx.stroke();
+                    }
+                }
+            });
+            
+            // Dibujar información de juego
+            ctx.font = '16px Arial';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Tiempo: ${(currentTime / 1000).toFixed(1)}s`, 20, 30);
+            ctx.fillText(`Beats: ${currentBeatIndex}/${rhythmPoints.length}`, 20, 60);
+        }
+        
+        // Dibujar canvas estático
+        function drawStaticCanvas() {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.font = '20px Arial';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.fillText('Importa un archivo JSON y presiona "Comenzar Juego"', canvas.width / 2, canvas.height / 2);
+        }
+        
+        // Manejar la pulsación de tecla
+        function handleKeyPress() {
+            if (!isRunning) return;
+            
+            const currentTime = Date.now() - startTime;
+            keyElement.classList.add('pressed');
+            setTimeout(() => keyElement.classList.remove('pressed'), 100);
+            
+            // Buscar el beat más cercano
+            let closestBeat = null;
+            let minDiff = Infinity;
+            
+            for (let i = currentBeatIndex; i < rhythmPoints.length; i++) {
+                const point = rhythmPoints[i];
+                if (point.state !== 'approaching') continue;
+                
+                const diff = Math.abs(point.time - currentTime);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestBeat = point;
+                }
+                
+                // Si el beat está en el futuro, dejar de buscar
+                if (point.time > currentTime + 300) break;
+            }
+            
+            // Verificar si el hit fue exitoso
+            if (closestBeat && minDiff < 300) {
+                closestBeat.state = 'hit';
+                closestBeat.hitTime = currentTime;
+                currentBeatIndex++;
+                
+                // Calcular puntuación basada en la precisión
+                let hitScore = 0;
+                let accuracyText = "";
+                
+                if (minDiff < 50) {
+                    hitScore = 100;
+                    accuracyText = "PERFECTO!";
+                } else if (minDiff < 100) {
+                    hitScore = 80;
+                    accuracyText = "GENIAL!";
+                } else if (minDiff < 200) {
+                    hitScore = 50;
+                    accuracyText = "BIEN!";
+                } else {
+                    hitScore = 20;
+                    accuracyText = "REGULAR";
+                }
+                
+                // Aumentar combo y puntuación
+                combo++;
+                if (combo > maxCombo) maxCombo = combo;
+                score += hitScore * (1 + combo / 10);
+                
+                // Actualizar precisión
+                totalHits++;
+                successfulHits++;
+                accuracy = (successfulHits / totalHits) * 100;
+                
+                // Mostrar texto de precisión
+                showAccuracyText(accuracyText);
+                updateComboText(`Combo x${combo}!`);
+            } else {
+                // Fallo
+                combo = 0;
+                totalHits++;
+                accuracy = (successfulHits / totalHits) * 100;
+                updateComboText("¡Fallaste!");
+            }
+            
+            updateUI();
+        }
+        
+        // Mostrar texto de precisión
+        function showAccuracyText(text) {
+            const accuracyDisplay = document.createElement('div');
+            accuracyDisplay.className = 'accuracy-display';
+            accuracyDisplay.textContent = text;
+            accuracyDisplay.style.color = getAccuracyColor(text);
+            
+            document.body.appendChild(accuracyDisplay);
+            
+            // Posicionar en el centro
+            const canvasRect = canvas.getBoundingClientRect();
+            accuracyDisplay.style.left = `${canvasRect.left + canvasRect.width / 2 - accuracyDisplay.offsetWidth / 2}px`;
+            accuracyDisplay.style.top = `${canvasRect.top + canvasRect.height / 2 - 50}px`;
+            accuracyDisplay.style.opacity = '1';
+            
+            // Desvanecer
+            setTimeout(() => {
+                accuracyDisplay.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(accuracyDisplay);
+                }, 300);
+            }, 1000);
+        }
+        
+        // Obtener color según la precisión
+        function getAccuracyColor(text) {
+            switch(text) {
+                case "PERFECTO!": return "#00ffaa";
+                case "GENIAL!": return "#55ff00";
+                case "BIEN!": return "#ffdd00";
+                case "REGULAR": return "#ff8800";
+                default: return "white";
+            }
+        }
+        
+        // Actualizar texto de combo
+        function updateComboText(text) {
+            comboTextElement.textContent = text;
+            comboTextElement.style.color = combo > 0 ? "#00ffaa" : "#ff5555";
+            
+            if (combo > 0) {
+                comboTextElement.style.fontSize = `${1.2 + combo * 0.05}rem`;
+            } else {
+                comboTextElement.style.fontSize = "1.2rem";
+            }
+        }
+        
+        // Actualizar la interfaz de usuario
+        function updateUI() {
+            scoreElement.textContent = Math.floor(score);
+            accuracyElement.textContent = `${accuracy.toFixed(1)}%`;
+            comboElement.textContent = combo;
+        }
+        
+        // Finalizar el juego
+        function endGame() {
+            isRunning = false;
+            cancelAnimationFrame(animationId);
+            
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.font = '30px Arial';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.fillText('¡Juego Terminado!', canvas.width / 2, canvas.height / 2 - 50);
+            
+            ctx.font = '20px Arial';
+            ctx.fillText(`Puntuación: ${Math.floor(score)}`, canvas.width / 2, canvas.height / 2);
+            ctx.fillText(`Precisión: ${accuracy.toFixed(1)}%`, canvas.width / 2, canvas.height / 2 + 40);
+            ctx.fillText(`Combo Máximo: ${maxCombo}`, canvas.width / 2, canvas.height / 2 + 80);
+            
+            startBtn.textContent = 'Jugar de Nuevo';
+        }
+        
+        // Funciones del editor
+        function toggleRecording() {
+            if (!isRecording) {
+                isRecording = true;
+                recordStartTime = Date.now();
+                recordedBeats = [];
+                recordBtn.textContent = 'Detener Grabación';
+                saveBtn.disabled = true;
+                
+                editorAnimationId = requestAnimationFrame(updateEditorTimer);
+            } else {
+                isRecording = false;
+                recordBtn.textContent = 'Comenzar Grabación';
+                saveBtn.disabled = false;
+                cancelAnimationFrame(editorAnimationId);
+                
+                // Mostrar beats registrados
+                if (recordedBeats.length > 0) {
+                    beatsListElement.textContent = recordedBeats.join(', ');
+                } else {
+                    beatsListElement.textContent = 'Ninguno';
+                }
+            }
+        }
+        
+        function handleEditorKeyPress() {
+            if (!isRecording) return;
+            
+            const currentTime = Date.now() - recordStartTime;
+            recordedBeats.push(currentTime);
+            
+            editorKeyElement.classList.add('pressed');
+            setTimeout(() => editorKeyElement.classList.remove('pressed'), 100);
+            
+            beatCountElement.textContent = recordedBeats.length;
+            
+            // Dibujar un círculo en el editor
+            drawEditorBeat();
+        }
+        
+        function updateEditorTimer() {
+            if (!isRecording) return;
+            
+            const currentTime = Date.now() - recordStartTime;
+            
+            // Actualizar el temporizador
             const milliseconds = currentTime % 1000;
             const seconds = Math.floor((currentTime / 1000) % 60);
             const minutes = Math.floor((currentTime / (1000 * 60)) % 60);
             
-            timerElement.textContent = 
+            editorTimerElement.textContent = 
                 `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}:${Math.floor(milliseconds/10).toString().padStart(2, '0')}`;
+            
+            // Dibujar en el editor
+            drawEditor();
+            
+            editorAnimationId = requestAnimationFrame(updateEditorTimer);
         }
         
-        // Registrar un tiempo
-        function recordTime() {
-            if (isRunning) {
-                recordedTimes.push(currentTime);
-                updateTimeDataDisplay();
-                
-                // Efecto visual en el botón
-                tapBtn.classList.add('active');
-                setTimeout(() => tapBtn.classList.remove('active'), 100);
-                
-                // Dibujar un círculo en el canvas
-                drawBeat();
-            }
+        function drawEditor() {
+            // Limpiar el canvas
+            editorCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            editorCtx.fillRect(0, 0, editorCanvas.width, editorCanvas.height);
+            
+            // Dibujar línea central
+            editorCtx.strokeStyle = 'white';
+            editorCtx.lineWidth = 2;
+            editorCtx.beginPath();
+            editorCtx.moveTo(0, editorCanvas.height / 2);
+            editorCtx.lineTo(editorCanvas.width, editorCanvas.height / 2);
+            editorCtx.stroke();
+            
+            // Dibujar información
+            editorCtx.font = '16px Arial';
+            editorCtx.fillStyle = 'white';
+            editorCtx.textAlign = 'left';
+            editorCtx.fillText(`Beats: ${recordedBeats.length}`, 20, 30);
         }
         
-        // Dibujar un beat en el canvas
-        function drawBeat() {
-            const x = Math.random() * (canvas.width - 100) + 50;
-            const y = Math.random() * (canvas.height - 100) + 50;
-            const size = Math.random() * 30 + 20;
+        function drawEditorBeat() {
+            const x = Math.random() * (editorCanvas.width - 100) + 50;
+            const y = Math.random() * (editorCanvas.height - 100) + 50;
+            const size = Math.random() * 20 + 15;
             
-            ctx.fillStyle = 'rgba(255, 107, 107, 0.7)';
-            ctx.beginPath();
-            ctx.arc(x, y, size, 0, Math.PI * 2);
-            ctx.fill();
+            editorCtx.fillStyle = 'rgba(255, 107, 107, 0.7)';
+            editorCtx.beginPath();
+            editorCtx.arc(x, y, size, 0, Math.PI * 2);
+            editorCtx.fill();
             
-            // Añadir elemento visual en la línea de tiempo
-            const marker = document.createElement('div');
-            marker.className = 'timeline-marker';
-            marker.style.left = `${(currentTime % 10000) / 10000 * 100}%`;
-            document.querySelector('.timeline').appendChild(marker);
-            
-            // Eliminar después de un tiempo
-            setTimeout(() => {
-                if (marker.parentNode) {
-                    marker.parentNode.removeChild(marker);
-                }
-            }, 2000);
+            editorCtx.strokeStyle = 'white';
+            editorCtx.lineWidth = 2;
+            editorCtx.stroke();
         }
         
-        // Dibujar en el canvas
-        function drawCanvas() {
-            // Fondo semitransparente para efecto de estela
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        function drawStaticEditorCanvas() {
+            editorCtx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            editorCtx.fillRect(0, 0, editorCanvas.width, editorCanvas.height);
             
-            // Dibujar círculos de beats
-            const current = currentTime;
-            recordedTimes.forEach(time => {
-                const elapsed = current - time;
-                if (elapsed < 2000) { // Mostrar por 2 segundos
-                    const progress = elapsed / 2000;
-                    const size = 30 * (1 - progress);
-                    const alpha = 0.7 * (1 - progress);
-                    
-                    const x = canvas.width / 2;
-                    const y = canvas.height / 2;
-                    
-                    ctx.fillStyle = `rgba(255, 107, 107, ${alpha})`;
-                    ctx.beginPath();
-                    ctx.arc(x, y, size, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-            });
-            
-            // Dibujar texto de instrucción
-            ctx.font = '20px Arial';
-            ctx.fillStyle = 'white';
-            ctx.textAlign = 'center';
-            ctx.fillText('Presiona X o el botón para marcar el ritmo', canvas.width / 2, 30);
+            editorCtx.font = '20px Arial';
+            editorCtx.fillStyle = 'white';
+            editorCtx.textAlign = 'center';
+            editorCtx.fillText('Presiona "Comenzar Grabación" para crear un nivel', editorCanvas.width / 2, editorCanvas.height / 2);
         }
         
-        // Actualizar la visualización de datos de tiempo
-        function updateTimeDataDisplay() {
-            beatCountElement.textContent = recordedTimes.length;
-            
-            if (recordedTimes.length === 0) {
-                timeDataElement.innerHTML = 'Los tiempos registrados aparecerán aquí...';
+        function saveLevel() {
+            if (recordedBeats.length === 0) {
+                alert('No hay beats grabados. Graba algunos beats primero.');
                 return;
             }
             
-            let html = '<div style="margin-bottom: 10px;"><strong>Tiempos registrados (ms):</strong></div>';
-            html += '<div style="display: flex; flex-wrap: wrap; gap: 5px;">';
+            const levelData = JSON.stringify(recordedBeats);
+            const blob = new Blob([levelData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
             
-            recordedTimes.forEach((time, index) => {
-                const seconds = (time / 1000).toFixed(2);
-                html += `<span class="beat" title="${seconds}s"></span>`;
-                if (index > 0 && index % 20 === 0) html += '<br>';
-            });
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'nivel_ritmico.json';
+            a.click();
             
-            html += '</div>';
-            html += `<div style="margin-top: 10px;">Total: ${recordedTimes.length} beats</div>`;
-            
-            timeDataElement.innerHTML = html;
+            URL.revokeObjectURL(url);
         }
         
-        // Exportar datos
-        function exportData() {
-            if (recordedTimes.length === 0) {
-                alert('No hay datos para exportar');
-                return;
-            }
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
             
-            const dataStr = JSON.stringify(recordedTimes, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            fileNameElement.textContent = file.name;
             
-            const exportFileDefaultName = 'ritmo_datos.json';
-            
-            const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            linkElement.click();
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    // Verificar que los datos sean un array de números
+                    if (Array.isArray(data) && data.every(item => typeof item === 'number')) {
+                        rhythmPoints = data.map(time => ({
+                            time: time,
+                            state: 'approaching',
+                            y: 0,
+                            hitTime: 0
+                        }));
+                        
+                        alert(`Nivel cargado con éxito! ${data.length} beats importados.`);
+                    } else {
+                        throw new Error('Formato de JSON inválido');
+                    }
+                } catch (error) {
+                    alert('Error al cargar el archivo: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
         }
         
         // Iniciar la aplicación cuando se cargue la página
