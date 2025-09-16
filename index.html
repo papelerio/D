@@ -1,749 +1,513 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON en Juegos Rítmicos - Potencial Completo</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: white;
-            padding: 20px;
-            overflow-x: hidden;
-        }
-        
-        .container {
-            width: 100%;
-            max-width: 1000px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        h1 {
-            font-size: 2.5rem;
-            margin-bottom: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-            text-align: center;
-        }
-        
-        h2 {
-            font-size: 1.8rem;
-            margin: 30px 0 15px;
-            text-align: center;
-            color: #ffeb3b;
-        }
-        
-        .tabs {
-            display: flex;
-            width: 100%;
-            margin-bottom: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 10px;
-            overflow: hidden;
-            flex-wrap: wrap;
-        }
-        
-        .tab {
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: background 0.3s;
-            flex: 1;
-            min-width: 120px;
-        }
-        
-        .tab.active {
-            background: rgba(255, 107, 107, 0.7);
-            font-weight: bold;
-        }
-        
-        .tab-content {
-            width: 100%;
-            display: none;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        
-        .tab-content.active {
-            display: block;
-        }
-        
-        .json-example {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 15px;
-            border-radius: 5px;
-            margin: 15px 0;
-            overflow-x: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            width: 100%;
-            margin: 20px 0;
-        }
-        
-        .feature-card {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 10px;
-            padding: 20px;
-            transition: transform 0.3s;
-        }
-        
-        .feature-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.15);
-        }
-        
-        .feature-card h3 {
-            color: #ff6b6b;
-            margin-bottom: 10px;
-            font-size: 1.3rem;
-        }
-        
-        .demo-container {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 20px 0;
-        }
-        
-        .demo-canvas {
-            background: rgba(0, 0, 0, 0.7);
-            border-radius: 10px;
-            margin: 15px 0;
-            width: 100%;
-            max-width: 600px;
-            height: 300px;
-        }
-        
-        .controls {
-            display: flex;
-            gap: 10px;
-            margin: 15px 0;
-            flex-wrap: wrap;
-            justify-content: center;
-            width: 100%;
-        }
-        
-        button {
-            background: #ff6b6b;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 50px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-        }
-        
-        button:hover {
-            background: #ff8e8e;
-            transform: translateY(-2px);
-        }
-        
-        .key {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, #2196F3, #1976D2);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            transition: all 0.1s;
-            user-select: none;
-            margin: 10px;
-        }
-        
-        .key.pressed {
-            transform: scale(0.95);
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            background: linear-gradient(135deg, #64b5f6, #42a5f5);
-        }
-        
-        .json-structure {
-            margin: 15px 0;
-            padding: 15px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 5px;
-        }
-        
-        .json-structure ul {
-            list-style: none;
-            padding-left: 20px;
-        }
-        
-        .json-structure li {
-            margin: 8px 0;
-            position: relative;
-            padding-left: 20px;
-        }
-        
-        .json-structure li:before {
-            content: "•";
-            color: #ff6b6b;
-            font-weight: bold;
-            position: absolute;
-            left: 0;
-        }
-        
-        @media (max-width: 768px) {
-            h1 {
-                font-size: 2rem;
-            }
-            
-            h2 {
-                font-size: 1.5rem;
-            }
-            
-            .tab {
-                min-width: 100px;
-                padding: 12px 8px;
-                font-size: 0.9rem;
-            }
-            
-            .feature-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Tilemap Editor Mejorado</title>
+  <style>
+    body { margin: 0; display: flex; font-family: sans-serif; background: #eee; color: #000; }
+    #canvas { flex: 1; background: #eee; cursor: crosshair; }
+    #left-sidebar { width: 300px; background: #ddd; padding: 10px; display: flex; flex-direction: column; }
+    #right-sidebar { width: 300px; background: #ddd; padding: 10px; display: flex; flex-direction: column; }
+    .section { margin-bottom: 10px; padding: 5px; background: #ccc; border-radius: 6px; position: relative; }
+    .section h3 { margin: 0 0 5px 0; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+    .toggle-btn { 
+      background: #4caf50; 
+      color: white; 
+      border: none; 
+      border-radius: 3px; 
+      width: 20px; 
+      height: 20px; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      cursor: pointer; 
+      font-size: 12px; 
+      padding: 0;
+    }
+    button { margin: 2px; padding: 5px; cursor: pointer; }
+    #textures { display: flex; flex-wrap: wrap; }
+    #textures img { width: 40px; height: 40px; margin: 2px; border: 2px solid transparent; cursor: pointer; }
+    #textures img.selected { border-color: red; }
+    #shortcuts { display: flex; flex-wrap: wrap; }
+    #shortcuts .shortcut { width: 50px; margin: 5px; text-align: center; cursor: pointer; }
+    #shortcuts .shortcut img { width: 40px; height: 40px; border: 2px solid transparent; }
+    #shortcuts .shortcut.selected img { border-color: red; }
+    #shortcuts .shortcut .tag { font-size: 10px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; }
+    .section-content { display: block; }
+    .section-content.collapsed { display: none; }
+    #eventModal, #confirmModal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; }
+    #eventModal .content, #confirmModal .content { background:#fff; padding:20px; border-radius:10px; text-align:center; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Potencial de JSON en Juegos Rítmicos</h1>
-        
-        <div class="tabs">
-            <div class="tab active" data-tab="info">Información</div>
-            <div class="tab" data-tab="dificultad">Niveles de Dificultad</div>
-            <div class="tab" data-tab="patrones">Patrones Complejos</div>
-            <div class="tab" data-tab="personalizacion">Personalización</div>
-            <div class="tab" data-tab="demo">Demostración</div>
-        </div>
-        
-        <!-- Información General -->
-        <div class="tab-content active" id="info-tab">
-            <h2>¿Qué más se puede hacer con JSON?</h2>
-            <p>Los JSON pueden almacenar mucha más información que simples tiempos. Aquí te muestro todo el potencial que tienen para crear experiencias de juego ricas y personalizables.</p>
-            
-            <div class="feature-grid">
-                <div class="feature-card">
-                    <h3>Múltiples Niveles de Dificultad</h3>
-                    <p>Define fácil, medio y difícil con diferentes velocidades y patrones.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <h3>Tipos de Notas y Patrones</h3>
-                    <p>Notas simples, sostenidas, deslizantes y más para crear patrones complejos.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <h3>Personalización Visual</h3>
-                    <p>Cambia skins, fondos y efectos visuales para cada canción o nivel.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <h3>Sistema de Puntuación Avanzado</h3>
-                    <p>Define diferentes valores para cada tipo de nota y combo.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <h3>Eventos Especiales</h3>
-                    <p>Cambios de velocidad, efectos visuales y sonoros en momentos específicos.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <h3>Metadatos de Canciones</h3>
-                    <p>BPM, offset, información del artista y más para una sincronización perfecta.</p>
-                </div>
-            </div>
-            
-            <div class="json-structure">
-                <h3>Estructura JSON Avanzada para Juegos Rítmicos</h3>
-                <ul>
-                    <li><strong>metadata</strong>: Información de la canción (BPM, offset, título, artista)</li>
-                    <li><strong>difficultyLevels</strong>: Múltiples niveles de dificultad</li>
-                    <li><strong>notes</strong>: Array de notas con tipo, tiempo, duración y posición</li>
-                    <li><strong>events</strong>: Eventos especiales (cambios de velocidad, efectos)</li>
-                    <li><strong>scoring</strong>: Sistema de puntuación personalizado</li>
-                    <li><strong>visuals</strong>: Personalización de apariencia</li>
-                </ul>
-            </div>
-        </div>
-        
-        <!-- Niveles de Dificultad -->
-        <div class="tab-content" id="dificultad-tab">
-            <h2>Múltiples Niveles de Dificultad</h2>
-            <p>Con JSON puedes definir diferentes niveles de dificultad para adaptarte a todo tipo de jugadores.</p>
-            
-            <div class="json-example">
-{
-  "song": "Canción Ejemplo",
-  "artist": "Artista Desconocido",
-  "bpm": 120,
-  "offset": 50,
-  "difficultyLevels": {
-    "easy": {
-      "speed": 1.0,
-      "noteDensity": 0.7,
-      "maxSimultaneousNotes": 1,
-      "accuracyThreshold": 150
-    },
-    "medium": {
-      "speed": 1.2,
-      "noteDensity": 0.85,
-      "maxSimultaneousNotes": 2,
-      "accuracyThreshold": 100
-    },
-    "hard": {
-      "speed": 1.5,
-      "noteDensity": 1.0,
-      "maxSimultaneousNotes": 3,
-      "accuracyThreshold": 75
-    },
-    "expert": {
-      "speed": 1.8,
-      "noteDensity": 1.2,
-      "maxSimultaneousNotes": 4,
-      "accuracyThreshold": 50
-    }
-  }
-}
-            </div>
-            
-            <div class="demo-container">
-                <div class="demo-canvas" id="difficulty-canvas"></div>
-                <div class="controls">
-                    <button data-difficulty="easy">Fácil</button>
-                    <button data-difficulty="medium">Medio</button>
-                    <button data-difficulty="hard">Difícil</button>
-                    <button data-difficulty="expert">Experto</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Patrones Complejos -->
-        <div class="tab-content" id="patrones-tab">
-            <h2>Tipos de Notas y Patrones Complejos</h2>
-            <p>JSON permite definir diferentes tipos de notas para crear patrones complejos y variados.</p>
-            
-            <div class="json-example">
-{
-  "notes": [
-    {
-      "type": "tap",
-      "time": 1000,
-      "position": 0,
-      "score": 100
-    },
-    {
-      "type": "hold",
-      "time": 2500,
-      "duration": 800,
-      "position": 2,
-      "score": 150
-    },
-    {
-      "type": "slide",
-      "time": 4000,
-      "positions": [1, 2, 3],
-      "duration": 1000,
-      "score": 200
-    },
-    {
-      "type": "simultaneous",
-      "time": 6000,
-      "notes": [
-        {"position": 0, "score": 100},
-        {"position": 3, "score": 100}
-      ],
-      "score": 250
-    }
-  ]
-}
-            </div>
-            
-            <div class="demo-container">
-                <div class="demo-canvas" id="patterns-canvas"></div>
-                <div class="controls">
-                    <div class="key" data-note="tap">T</div>
-                    <div class="key" data-note="hold">H</div>
-                    <div class="key" data-note="slide">S</div>
-                    <div class="key" data-note="simultaneous">M</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Personalización -->
-        <div class="tab-content" id="personalizacion-tab">
-            <h2>Personalización Completa</h2>
-            <p>JSON permite personalizar todos los aspectos visuales y de juego para una experiencia única.</p>
-            
-            <div class="json-example">
-{
-  "visuals": {
-    "background": {
-      "image": "background.jpg",
-      "color": "#1a2a6c",
-      "animation": "parallax"
-    },
-    "notes": {
-      "tap": {
-        "color": "#2196F3",
-        "texture": "circle.png",
-        "size": 30
-      },
-      "hold": {
-        "color": "#4CAF50",
-        "texture": "rectangle.png",
-        "size": [30, 100]
-      }
-    },
-    "effects": {
-      "perfect": {"color": "#FFEB3B", "particles": 10},
-      "good": {"color": "#4CAF50", "particles": 5},
-      "miss": {"color": "#F44336", "particles": 3}
-    }
-  },
-  "scoring": {
-    "perfect": 100,
-    "good": 50,
-    "bad": 20,
-    "miss": 0,
-    "comboMultiplier": 0.1,
-    "maxComboBonus": 500
-  },
-  "audio": {
-    "tapSound": "tap.wav",
-    "holdSound": "hold.wav",
-    "backgroundMusic": "song.mp3",
-    "volume": 0.8
-  }
-}
-            </div>
-            
-            <div class="demo-container">
-                <div class="demo-canvas" id="customization-canvas"></div>
-                <div class="controls">
-                    <button data-theme="default">Tema Predeterminado</button>
-                    <button data-theme="dark">Tema Oscuro</button>
-                    <button data-theme="neon">Tema Neon</button>
-                    <button data-theme="pastel">Tema Pastel</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Demostración -->
-        <div class="tab-content" id="demo-tab">
-            <h2>Demostración Completa</h2>
-            <p>Un ejemplo completo de cómo un JSON puede definir un nivel completo con todos estos elementos.</p>
-            
-            <div class="json-example">
-{
-  "metadata": {
-    "title": "Ritmo Electro",
-    "artist": "DJ JSON",
-    "bpm": 128,
-    "offset": 42,
-    "duration": 120000
-  },
-  "difficulty": {
-    "easy": {
-      "speed": 1.0,
-      "noteDensity": 0.6,
-      "maxSimultaneousNotes": 1
-    },
-    "medium": {
-      "speed": 1.2,
-      "noteDensity": 0.8,
-      "maxSimultaneousNotes": 2
-    },
-    "hard": {
-      "speed": 1.5,
-      "noteDensity": 1.0,
-      "maxSimultaneousNotes": 3
-    }
-  },
-  "notes": [
-    {"type": "tap", "time": 1000, "position": 0},
-    {"type": "tap", "time": 2000, "position": 1},
-    {"type": "hold", "time": 3000, "duration": 1000, "position": 2},
-    {"type": "simultaneous", "time": 5000, "notes": [
-      {"position": 0}, {"position": 3}
-    ]},
-    {"type": "slide", "time": 7000, "positions": [0, 1, 2, 3], "duration": 1500}
-  ],
-  "events": [
-    {"type": "speedChange", "time": 8000, "speed": 1.8, "duration": 4000},
-    {"type": "visualEffect", "time": 10000, "effect": "strobe", "duration": 2000}
-  ],
-  "scoring": {
-    "perfect": 100,
-    "good": 50,
-    "bad": 20,
-    "miss": 0,
-    "comboMultiplier": 0.1
-  },
-  "visuals": {
-    "background": {"color": "#1a2a6c", "animation": "pulse"},
-    "notes": {
-      "tap": {"color": "#2196F3", "size": 30},
-      "hold": {"color": "#4CAF50", "size": [30, 100]},
-      "slide": {"color": "#9C27B0", "size": 25}
-    }
-  }
-}
-            </div>
-            
-            <div class="demo-container">
-                <div class="demo-canvas" id="full-demo-canvas"></div>
-                <div class="controls">
-                    <button id="load-demo">Cargar Demo</button>
-                    <button id="play-demo">Reproducir</button>
-                    <button id="pause-demo">Pausar</button>
-                </div>
-                <div class="key-container">
-                    <div class="key">A</div>
-                    <div class="key">S</div>
-                    <div class="key">D</div>
-                    <div class="key">F</div>
-                </div>
-            </div>
-        </div>
+  <!-- Sidebar izquierdo con Texturas y Tags -->
+  <div id="left-sidebar">
+    <div class="section">
+      <h3>
+        <span>Texturas (BBCode)</span>
+        <button class="toggle-btn" onclick="toggleSection('textures')">-</button>
+      </h3>
+      <div id="textures-content" class="section-content">
+        <input type="text" id="bbcodeInput" placeholder="[img]http://...[/img]">
+        <button onclick="importTexture()">Importar</button>
+        <div id="textures"></div>
+      </div>
     </div>
+    <div class="section">
+      <h3>
+        <span>Tags</span>
+        <button class="toggle-btn" onclick="toggleSection('tags')">-</button>
+      </h3>
+      <div id="tags-content" class="section-content">
+        <input type="text" id="tagInput" placeholder="Escribir tag">
+        <button onclick="addTag()">Agregar Tag</button>
+        <div id="tags"></div>
+      </div>
+    </div>
+    <div class="section">
+      <h3>
+        <span>Atajos</span>
+        <button onclick="addShortcut()" style="padding:0 5px; font-size:12px;">+</button>
+      </h3>
+      <div id="shortcuts"></div>
+    </div>
+  </div>
 
-    <script>
-        // Configuración de pestañas
-        const tabs = document.querySelectorAll('.tab');
-        const tabContents = document.querySelectorAll('.tab-content');
-        
-        tabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                const tabName = tab.getAttribute('data-tab');
-                
-                // Actualizar pestañas activas
-                tabs.forEach(t => t.classList.remove('active'));
-                tabContents.forEach(c => c.classList.remove('active'));
-                
-                tab.classList.add('active');
-                document.getElementById(`${tabName}-tab`).classList.add('active');
+  <!-- Canvas central -->
+  <canvas id="canvas"></canvas>
+
+  <!-- Sidebar derecho con las demás opciones -->
+  <div id="right-sidebar">
+    <div class="section">
+      <h3>Herramientas</h3>
+      <div class="section-content">
+        <button onclick="setTool('move')">Mover (1)</button>
+        <button onclick="setTool('paint')">Pintar (2)</button>
+        <button onclick="setTool('erase')">Borrador (3)</button>
+        <button onclick="openEventModal()">Evento (4)</button>
+        <button onclick="clearAllConfirm()">Limpiar Todo (5)</button>
+      </div>
+    </div>
+    <div class="section">
+      <h3>JSON</h3>
+      <div class="section-content">
+        <button onclick="downloadJSON()">Descargar JSON</button>
+        <input type="file" id="jsonFile" onchange="importJSON(event)">
+      </div>
+    </div>
+    <div class="section">
+      <h3>Vista del Nivel</h3>
+      <div class="section-content">
+        <label><input type="radio" name="viewMode" value="static" onchange="setViewMode(this.value)"> Vista estática completa</label><br>
+        <label><input type="radio" name="viewMode" value="x" onchange="setViewMode(this.value)"> Vista desplazada solo en eje X</label><br>
+        <label><input type="radio" name="viewMode" value="y" onchange="setViewMode(this.value)"> Vista desplazada solo en eje Y</label><br>
+        <label><input type="radio" name="viewMode" value="xy" onchange="setViewMode(this.value)"> Vista desplazada en eje X y Y</label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modales -->
+  <div id="eventModal">
+    <div class="content">
+      <h3>Insertar número de evento</h3>
+      <input type="number" id="eventNumber" placeholder="Ej: 1">
+      <div style="margin-top:10px;">
+        <button onclick="confirmEvent()">Aceptar</button>
+        <button onclick="closeEventModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmModal">
+    <div class="content">
+      <h3>¿Seguro que deseas limpiar todo?</h3>
+      <div style="margin-top:10px;">
+        <button onclick="doClearAll()">Sí</button>
+        <button onclick="closeConfirmModal()">No</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth - 600; // Restamos el ancho de ambos sidebars
+    canvas.height = window.innerHeight;
+
+    let tileSize = 32;
+    let offsetX = 0, offsetY = 0;
+    let tool = 'paint';
+    let textures = [];
+    let selectedTexture = null;
+    let isDragging = false;
+    let dragButton = null;
+    let startX, startY;
+    let eventModeNumber = null;
+    let tags = [];
+    let selectedTag = null;
+    let undoStack = [], redoStack = [];
+    let shortcuts = [];
+
+    let mapData = {}; // {"x,y": {type:'masa'|'evento', texture?, tags?, event?}}
+    let viewMode = "static";
+
+    function setViewMode(mode){
+      viewMode = mode;
+    }
+
+    function updateViewModeUI(){
+      document.querySelectorAll('input[name="viewMode"]').forEach(r=>{
+        r.checked = (r.value === viewMode);
+      });
+    }
+
+    function pushHistory(){
+      undoStack.push(JSON.stringify(mapData));
+      if(undoStack.length>50) undoStack.shift();
+      redoStack=[];
+    }
+
+    function undo(){
+      if(undoStack.length){
+        redoStack.push(JSON.stringify(mapData));
+        mapData = JSON.parse(undoStack.pop());
+        draw();
+      }
+    }
+
+    function redo(){
+      if(redoStack.length){
+        undoStack.push(JSON.stringify(mapData));
+        mapData = JSON.parse(redoStack.pop());
+        draw();
+      }
+    }
+
+    function setTool(t){ tool = t; }
+
+    function clearAllConfirm(){
+      document.getElementById('confirmModal').style.display='flex';
+    }
+    function closeConfirmModal(){
+      document.getElementById('confirmModal').style.display='none';
+    }
+    function doClearAll(){
+      mapData={};
+      closeConfirmModal();
+      draw();
+    }
+
+    function openEventModal(){ document.getElementById('eventModal').style.display='flex'; }
+    function closeEventModal(){ document.getElementById('eventModal').style.display='none'; }
+    function confirmEvent(){
+      const num=document.getElementById('eventNumber').value;
+      if(num){ eventModeNumber=parseInt(num); tool='event'; }
+      closeEventModal();
+    }
+
+    function importTexture(){
+      const input=document.getElementById('bbcodeInput').value.trim();
+      const match=input.match(/\[img\](.*?)\[\/img\]/i);
+      if(match){
+        const url=match[1];
+        const img=new Image();
+        img.src=url;
+        img.onload=()=>draw();
+        textures.push({url,img});
+        updateTexturesUI();
+      }
+    }
+
+    function updateTexturesUI(){
+      const div=document.getElementById('textures');
+      div.innerHTML='';
+      textures.forEach((tex,i)=>{
+        const el=document.createElement('img');
+        el.src=tex.url;
+        el.onclick=()=>{
+          selectedTexture=tex;
+          document.querySelectorAll('#textures img').forEach(im=>im.classList.remove('selected'));
+          el.classList.add('selected');
+          checkSelectedShortcut();
+        };
+        div.appendChild(el);
+      });
+    }
+
+    function addTag(){
+      const input=document.getElementById('tagInput').value.trim();
+      if(input){
+        tags.push(input);
+        updateTagsUI();
+        document.getElementById('tagInput').value='';
+      }
+    }
+    
+    function updateTagsUI(){
+      const div=document.getElementById('tags');
+      div.innerHTML='';
+      tags.forEach(tag=>{
+        const btn=document.createElement('button');
+        btn.textContent=tag;
+        btn.onclick=()=>{
+          selectedTag=tag;
+          document.querySelectorAll('#tags button').forEach(b=>b.style.border='');
+          btn.style.border='2px solid red';
+          checkSelectedShortcut();
+        };
+        div.appendChild(btn);
+      });
+    }
+
+    function addShortcut(){
+      if (!selectedTexture || !selectedTag) {
+        alert('Debes seleccionar una textura y un tag primero');
+        return;
+      }
+      
+      // Verificar si ya existe este atajo
+      const exists = shortcuts.some(s => s.texture === selectedTexture.url && s.tag === selectedTag);
+      if (exists) {
+        alert('Este atajo ya existe');
+        return;
+      }
+      
+      shortcuts.push({
+        texture: selectedTexture.url,
+        tag: selectedTag
+      });
+      
+      updateShortcutsUI();
+    }
+    
+    function updateShortcutsUI(){
+      const div = document.getElementById('shortcuts');
+      div.innerHTML = '';
+      
+      shortcuts.forEach((shortcut, index) => {
+        const shortcutDiv = document.createElement('div');
+        shortcutDiv.className = 'shortcut';
+        shortcutDiv.onclick = () => {
+          // Seleccionar la textura correspondiente
+          selectedTexture = textures.find(t => t.url === shortcut.texture);
+          if (selectedTexture) {
+            document.querySelectorAll('#textures img').forEach(img => {
+              img.classList.remove('selected');
+              if (img.src === selectedTexture.url) {
+                img.classList.add('selected');
+              }
             });
+          }
+          
+          // Seleccionar el tag correspondiente
+          selectedTag = shortcut.tag;
+          document.querySelectorAll('#tags button').forEach(btn => {
+            btn.style.border = '';
+            if (btn.textContent === selectedTag) {
+              btn.style.border = '2px solid red';
+            }
+          });
+          
+          // Cambiar a herramienta de pintar
+          setTool('paint');
+          
+          // Resaltar el atajo seleccionado
+          checkSelectedShortcut();
+        };
+        
+        const img = document.createElement('img');
+        img.src = shortcut.texture;
+        
+        const tagSpan = document.createElement('div');
+        tagSpan.className = 'tag';
+        tagSpan.textContent = shortcut.tag;
+        
+        shortcutDiv.appendChild(img);
+        shortcutDiv.appendChild(tagSpan);
+        div.appendChild(shortcutDiv);
+      });
+      
+      checkSelectedShortcut();
+    }
+    
+    function checkSelectedShortcut(){
+      // Quitar selección de todos los atajos
+      document.querySelectorAll('.shortcut').forEach(el => {
+        el.classList.remove('selected');
+      });
+      
+      // Si hay una textura y tag seleccionados, buscar coincidencia con atajos
+      if (selectedTexture && selectedTag) {
+        const index = shortcuts.findIndex(s => 
+          s.texture === selectedTexture.url && s.tag === selectedTag
+        );
+        
+        if (index !== -1) {
+          // Resaltar el atajo correspondiente
+          const shortcutElements = document.querySelectorAll('.shortcut');
+          if (shortcutElements[index]) {
+            shortcutElements[index].classList.add('selected');
+          }
+        }
+      }
+    }
+    
+    function toggleSection(sectionId){
+      const content = document.getElementById(`${sectionId}-content`);
+      const btn = content.parentElement.querySelector('.toggle-btn');
+      
+      if (content.classList.contains('collapsed')) {
+        content.classList.remove('collapsed');
+        btn.textContent = '-';
+      } else {
+        content.classList.add('collapsed');
+        btn.textContent = '+';
+      }
+    }
+
+    // --- Eventos de mouse ---
+    canvas.addEventListener('mousedown', e=>{
+      isDragging=true;
+      dragButton=e.button;
+      startX=e.offsetX;
+      startY=e.offsetY;
+      if(dragButton===0){ // click izquierdo
+        handleAction(e);
+      }
+    });
+
+    canvas.addEventListener('mousemove', e=>{
+      if(isDragging){
+        if(dragButton===1){ // rueda presionada -> mover
+          offsetX+=e.movementX;
+          offsetY+=e.movementY;
+          draw();
+        } else if(dragButton===0){ 
+          handleAction(e);
+        }
+      }
+    });
+
+    canvas.addEventListener('mouseup', ()=>{ isDragging=false; dragButton=null; });
+
+    // --- Zoom con rueda ---
+    canvas.addEventListener('wheel', e=>{
+      e.preventDefault();
+      if(e.deltaY<0) tileSize=Math.min(tileSize+2,128);
+      else tileSize=Math.max(tileSize-2,8);
+      draw();
+    });
+
+    function handleAction(e){
+      const x=Math.floor((e.offsetX-offsetX)/tileSize);
+      const y=Math.floor((e.offsetY-offsetY)/tileSize);
+      const key=x+','+y;
+      if(tool==='paint' && selectedTexture && selectedTag){
+        pushHistory();
+        mapData[key]={type:'masa', texture:selectedTexture.url, tags:[selectedTag]};
+      } else if(tool==='erase'){
+        pushHistory();
+        delete mapData[key];
+      } else if(tool==='event' && eventModeNumber!=null){
+        pushHistory();
+        mapData[key]={type:'evento', event:eventModeNumber};
+      }
+      draw();
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      for(let key in mapData){
+        const [x,y]=key.split(',').map(Number);
+        const cell=mapData[key];
+        const px=x*tileSize+offsetX;
+        const py=y*tileSize+offsetY;
+        if(cell.type==='masa' && cell.texture){
+          const tex=textures.find(t=>t.url===cell.texture);
+          if(tex){ ctx.drawImage(tex.img,px,py,tileSize,tileSize); }
+          if(cell.tags && cell.tags.length){
+            ctx.fillStyle='black';
+            ctx.font=Math.floor(tileSize/4)+'px sans-serif';
+            ctx.textAlign='center';
+            ctx.fillText(cell.tags[0],px+tileSize/2,py+12);
+          }
+        } else if(cell.type==='evento'){
+          ctx.fillStyle='rgba(255,0,0,0.5)';
+          ctx.fillRect(px,py,tileSize,tileSize);
+          ctx.fillStyle='#000';
+          ctx.font=Math.floor(tileSize/2)+'px sans-serif';
+          ctx.textAlign='center';
+          ctx.fillText(cell.event,px+tileSize/2,py+tileSize/2+5);
+        }
+      }
+      // Dibujar grilla
+      ctx.strokeStyle='#ccc';
+      for(let x=0;x<canvas.width;x+=tileSize){
+        ctx.beginPath();ctx.moveTo(x+offsetX%tileSize,0);ctx.lineTo(x+offsetX%tileSize,canvas.height);ctx.stroke();
+      }
+      for(let y=0;y<canvas.height;y+=tileSize){
+        ctx.beginPath();ctx.moveTo(0,y+offsetY%tileSize);ctx.lineTo(canvas.width,y+offsetY%tileSize);ctx.stroke();
+      }
+    }
+
+    function downloadJSON(){
+      const data=JSON.stringify({
+        map:mapData,
+        textures:textures.map(t=>t.url),
+        tags,
+        viewMode
+      },null,2);
+      const blob=new Blob([data],{type:'application/json'});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(blob);
+      a.download='tilemap.json';
+      a.click();
+    }
+
+    function importJSON(event){
+      const file=event.target.files[0];
+      const reader=new FileReader();
+      reader.onload=e=>{
+        const obj=JSON.parse(e.target.result);
+        mapData=obj.map||{};
+        tags=obj.tags||[];
+        viewMode=obj.viewMode||"static";
+        updateTagsUI();
+        updateViewModeUI();
+        textures=[];
+        (obj.textures||[]).forEach(url=>{
+          const img=new Image();
+          img.src=url;
+          img.onload=()=>draw();
+          textures.push({url,img});
         });
-        
-        // Demostración de niveles de dificultad
-        const difficultyButtons = document.querySelectorAll('[data-difficulty]');
-        const difficultyCanvas = document.getElementById('difficulty-canvas');
-        
-        difficultyButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const difficulty = button.getAttribute('data-difficulty');
-                difficultyCanvas.innerHTML = `<h3>Dificultad: ${difficulty.toUpperCase()}</h3>`;
-                
-                // Simular diferentes densidades de notas
-                let noteCount;
-                switch(difficulty) {
-                    case 'easy': noteCount = 3; break;
-                    case 'medium': noteCount = 5; break;
-                    case 'hard': noteCount = 7; break;
-                    case 'expert': noteCount = 10; break;
-                }
-                
-                for (let i = 0; i < noteCount; i++) {
-                    const note = document.createElement('div');
-                    note.style.width = '30px';
-                    note.style.height = '30px';
-                    note.style.background = '#2196F3';
-                    note.style.borderRadius = '50%';
-                    note.style.position = 'absolute';
-                    note.style.left = `${10 + i * 15}%`;
-                    note.style.top = `${50 + Math.sin(i) * 20}%`;
-                    difficultyCanvas.appendChild(note);
-                }
-            });
-        });
-        
-        // Demostración de tipos de notas
-        const noteKeys = document.querySelectorAll('[data-note]');
-        const patternsCanvas = document.getElementById('patterns-canvas');
-        
-        noteKeys.forEach(key => {
-            key.addEventListener('click', () => {
-                const noteType = key.getAttribute('data-note');
-                patternsCanvas.innerHTML = `<h3>Nota: ${noteType.toUpperCase()}</h3>`;
-                
-                // Visualizar diferentes tipos de notas
-                const visual = document.createElement('div');
-                visual.style.position = 'absolute';
-                visual.style.left = '50%';
-                visual.style.top = '50%';
-                visual.style.transform = 'translate(-50%, -50%)';
-                
-                switch(noteType) {
-                    case 'tap':
-                        visual.style.width = '60px';
-                        visual.style.height = '60px';
-                        visual.style.background = '#2196F3';
-                        visual.style.borderRadius = '50%';
-                        break;
-                    case 'hold':
-                        visual.style.width = '60px';
-                        visual.style.height = '120px';
-                        visual.style.background = '#4CAF50';
-                        visual.style.borderRadius = '10px';
-                        break;
-                    case 'slide':
-                        visual.style.width = '180px';
-                        visual.style.height = '40px';
-                        visual.style.background = '#9C27B0';
-                        visual.style.borderRadius = '20px';
-                        break;
-                    case 'simultaneous':
-                        visual.innerHTML = `
-                            <div style="display: flex; gap: 20px;">
-                                <div style="width: 50px; height: 50px; background: #FF9800; border-radius: 50%;"></div>
-                                <div style="width: 50px; height: 50px; background: #FF9800; border-radius: 50%;"></div>
-                            </div>
-                        `;
-                        break;
-                }
-                
-                patternsCanvas.appendChild(visual);
-            });
-        });
-        
-        // Demostración de personalización
-        const themeButtons = document.querySelectorAll('[data-theme]');
-        const customizationCanvas = document.getElementById('customization-canvas');
-        
-        themeButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                const theme = button.getAttribute('data-theme');
-                customizationCanvas.innerHTML = `<h3>Tema: ${theme.toUpperCase()}</h3>`;
-                
-                // Aplicar diferentes temas
-                switch(theme) {
-                    case 'default':
-                        customizationCanvas.style.background = 'linear-gradient(135deg, #1a2a6c, #b21f1f)';
-                        break;
-                    case 'dark':
-                        customizationCanvas.style.background = 'linear-gradient(135deg, #000000, #333333)';
-                        break;
-                    case 'neon':
-                        customizationCanvas.style.background = 'linear-gradient(135deg, #00ffff, #ff00ff)';
-                        break;
-                    case 'pastel':
-                        customizationCanvas.style.background = 'linear-gradient(135deg, #ff9a9e, #fad0c4)';
-                        break;
-                }
-                
-                // Añadir notas de ejemplo
-                for (let i = 0; i < 5; i++) {
-                    const note = document.createElement('div');
-                    note.style.width = '40px';
-                    note.style.height = '40px';
-                    
-                    // Cambiar color según el tema
-                    switch(theme) {
-                        case 'default': note.style.background = '#2196F3'; break;
-                        case 'dark': note.style.background = '#BB86FC'; break;
-                        case 'neon': note.style.background = '#00ff00'; break;
-                        case 'pastel': note.style.background = '#ff9999'; break;
-                    }
-                    
-                    note.style.borderRadius = '50%';
-                    note.style.position = 'absolute';
-                    note.style.left = `${20 + i * 15}%`;
-                    note.style.top = `${30 + Math.sin(i) * 40}%`;
-                    customizationCanvas.appendChild(note);
-                }
-            });
-        });
-        
-        // Demostración completa
-        const fullDemoCanvas = document.getElementById('full-demo-canvas');
-        const loadDemoButton = document.getElementById('load-demo');
-        const playDemoButton = document.getElementById('play-demo');
-        const pauseDemoButton = document.getElementById('pause-demo');
-        
-        loadDemoButton.addEventListener('click', () => {
-            fullDemoCanvas.innerHTML = `
-                <h3>Demo Cargada</h3>
-                <p>Ritmo Electro - DJ JSON</p>
-                <div style="display: flex; justify-content: center; margin-top: 20px;">
-                    <div style="width: 30px; height: 30px; background: #2196F3; border-radius: 50%; margin: 0 10px;"></div>
-                    <div style="width: 30px; height: 30px; background: #4CAF50; border-radius: 50%; margin: 0 10px;"></div>
-                    <div style="width: 30px; height: 30px; background: #9C27B0; border-radius: 50%; margin: 0 10px;"></div>
-                    <div style="width: 30px; height: 30px; background: #FF9800; border-radius: 50%; margin: 0 10px;"></div>
-                </div>
-                <div style="margin-top: 30px;">
-                    <div style="width: 80%; height: 4px; background: white; margin: 10px auto; position: relative;">
-                        <div style="position: absolute; width: 10px; height: 10px; background: #ff6b6b; border-radius: 50%; top: -3px; left: 0%;"></div>
-                        <div style="position: absolute; width: 10px; height: 10px; background: #ff6b6b; border-radius: 50%; top: -3px; left: 25%;"></div>
-                        <div style="position: absolute; width: 10px; height: 10px; background: #ff6b6b; border-radius: 50%; top: -3px; left: 50%;"></div>
-                        <div style="position: absolute; width: 10px; height: 10px; background: #ff6b6b; border-radius: 50%; top: -3px; left: 75%;"></div>
-                    </div>
-                </div>
-            `;
-            
-            fullDemoCanvas.style.background = 'linear-gradient(135deg, #1a2a6c, #b21f1f)';
-        });
-        
-        playDemoButton.addEventListener('click', () => {
-            fullDemoCanvas.innerHTML += `<p style="margin-top: 20px;">▶ Reproduciendo...</p>`;
-        });
-        
-        pauseDemoButton.addEventListener('click', () => {
-            fullDemoCanvas.innerHTML += `<p style="margin-top: 20px;">⏸ Pausado</p>`;
-        });
-        
-        // Efecto de teclas
-        const keys = document.querySelectorAll('.key');
-        keys.forEach(key => {
-            key.addEventListener('mousedown', () => {
-                key.classList.add('pressed');
-            });
-            
-            key.addEventListener('mouseup', () => {
-                key.classList.remove('pressed');
-            });
-            
-            key.addEventListener('mouseleave', () => {
-                key.classList.remove('pressed');
-            });
-            
-            // Para dispositivos táctiles
-            key.addEventListener('touchstart', (e) => {
-                e.preventDefault();
-                key.classList.add('pressed');
-            });
-            
-            key.addEventListener('touchend', () => {
-                key.classList.remove('pressed');
-            });
-        });
-    </script>
+        updateTexturesUI();
+        draw();
+      };
+      reader.readAsText(file);
+    }
+
+    document.addEventListener('keydown', e=>{
+      if(e.ctrlKey && e.key==='z'){ e.preventDefault(); undo(); }
+      if(e.ctrlKey && e.key==='y'){ e.preventDefault(); redo(); }
+      if(!e.ctrlKey){
+        if(e.key==='1') setTool('move');
+        if(e.key==='2') setTool('paint');
+        if(e.key==='3') setTool('erase');
+        if(e.key==='4') openEventModal();
+        if(e.key==='5') clearAllConfirm();
+      }
+    });
+
+    // Ajustar el tamaño del canvas cuando se redimensiona la ventana
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth - 600;
+      canvas.height = window.innerHeight;
+      draw();
+    });
+
+    draw();
+    updateViewModeUI(); // inicializar radios
+  </script>
 </body>
 </html>
