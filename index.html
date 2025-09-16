@@ -56,6 +56,20 @@
     .gold-button:hover {
       background: linear-gradient(to bottom, #daa520, #b8860b);
     }
+    .green-button {
+      background: linear-gradient(to bottom, #4CAF50, #2E7D32);
+      color: white;
+      font-weight: bold;
+      border: 1px solid #1B5E20;
+      border-radius: 5px;
+      padding: 8px 12px;
+      margin: 10px 0;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .green-button:hover {
+      background: linear-gradient(to bottom, #2E7D32, #1B5E20);
+    }
     .delete-btn {
       background: #ff4444;
       color: white;
@@ -78,9 +92,21 @@
     .tag-item button {
       padding: 5px;
       margin: 2px;
+      border: 2px solid transparent;
+      transition: all 0.2s;
     }
     .tag-item button.selected {
-      border: 2px solid red;
+      background: linear-gradient(to bottom, #ffd700, #daa520);
+      color: #000;
+      border: 2px solid #b8860b;
+      font-weight: bold;
+    }
+    .tool-btn {
+      position: relative;
+    }
+    .tool-btn.active {
+      border: 2px solid #4CAF50 !important;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -128,10 +154,10 @@
     <div class="section">
       <h3>Herramientas</h3>
       <div class="section-content">
-        <button onclick="setTool('move')">Mover (1)</button>
-        <button onclick="setTool('paint')">Pintar (2)</button>
-        <button onclick="setTool('erase')">Borrador (3)</button>
-        <button onclick="openEventModal()">Evento (4)</button>
+        <button id="zoomTool" class="tool-btn" onclick="setTool('zoom')">Zoom (1)</button>
+        <button id="paintTool" class="tool-btn active" onclick="setTool('paint')">Pintar (2)</button>
+        <button id="eraseTool" class="tool-btn" onclick="setTool('erase')">Borrador (3)</button>
+        <button id="eventTool" class="tool-btn" onclick="openEventModal()">Evento (4)</button>
         <button onclick="clearAllConfirm()">Limpiar Todo (5)</button>
       </div>
     </div>
@@ -155,6 +181,7 @@
       <h3>Configuración Estándar</h3>
       <div class="section-content">
         <button class="gold-button" onclick="loadStandardConfig()">Usar Configuración Estándar</button>
+        <button class="green-button" onclick="openLevelPlayer()">Abrir Reproductor de Niveles</button>
       </div>
     </div>
   </div>
@@ -211,6 +238,8 @@
     let selectedTag = null;
     let undoStack = [], redoStack = [];
     let shortcuts = [];
+    let zoomPivot = null; // Para la herramienta de zoom: {x, y} en coordenadas del mapa
+    let initialTileSize = 0; // Tamaño inicial del tile cuando comenzamos el zoom
 
     let mapData = {}; // {"x,y": {type:'masa'|'evento', texture?, tags?, event?}}
     let viewMode = "static";
@@ -247,7 +276,14 @@
       }
     }
 
-    function setTool(t){ tool = t; }
+    function setTool(t){ 
+      tool = t; 
+      // Actualizar la interfaz para mostrar la herramienta activa
+      document.querySelectorAll('.tool-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.getElementById(t + 'Tool').classList.add('active');
+    }
 
     function clearAllConfirm(){
       document.getElementById('confirmModal').style.display='flex';
@@ -357,16 +393,21 @@
       div.innerHTML='';
       
       tags.forEach((tag, i)=>{
+        const container = document.createElement('div');
+        container.className = 'tag-item';
+        
         const btn=document.createElement('button');
         btn.textContent=tag;
         btn.onclick=()=>{
           selectedTag=tag;
-          document.querySelectorAll('#tags button').forEach(b=>b.classList.remove('selected'));
+          document.querySelectorAll('.tag-item button').forEach(b=>b.classList.remove('selected'));
           btn.classList.add('selected');
           updateDeleteButtons();
           checkSelectedShortcut();
         };
-        div.appendChild(btn);
+        
+        container.appendChild(btn);
+        div.appendChild(container);
       });
     }
 
@@ -417,7 +458,7 @@
           
           // Seleccionar el tag correspondiente
           selectedTag = shortcut.tag;
-          document.querySelectorAll('#tags button').forEach(btn => {
+          document.querySelectorAll('.tag-item button').forEach(btn => {
             btn.classList.remove('selected');
             if (btn.textContent === selectedTag) {
               btn.classList.add('selected');
@@ -535,14 +576,27 @@
         });
     }
 
+    function openLevelPlayer() {
+      window.open('https://papelerio.github.io/E/', '_blank');
+    }
+
     // --- Eventos de mouse ---
     canvas.addEventListener('mousedown', e=>{
       isDragging=true;
       dragButton=e.button;
       startX=e.offsetX;
       startY=e.offsetY;
+      
       if(dragButton===0){ // click izquierdo
-        handleAction(e);
+        if (tool === 'zoom') {
+          // Establecer el punto pivote para el zoom
+          const x = Math.floor((e.offsetX - offsetX) / tileSize);
+          const y = Math.floor((e.offsetY - offsetY) / tileSize);
+          zoomPivot = {x, y};
+          initialTileSize = tileSize;
+        } else {
+          handleAction(e);
+        }
       }
     });
 
@@ -553,12 +607,39 @@
           offsetY+=e.movementY;
           draw();
         } else if(dragButton===0){ 
-          handleAction(e);
+          if (tool === 'zoom' && zoomPivot) {
+            // Calcular la diferencia en Y para determinar el nivel de zoom
+            const deltaY = startY - e.offsetY;
+            const zoomFactor = 1 + (deltaY / 100);
+            
+            // Aplicar zoom manteniendo el punto pivote en la misma posición
+            const newTileSize = Math.max(8, Math.min(128, initialTileSize * zoomFactor));
+            
+            if (newTileSize !== tileSize) {
+              // Calcular cómo el cambio de zoom afecta al offset para mantener el pivote en la misma posición
+              const pivotScreenX = zoomPivot.x * tileSize + offsetX;
+              const pivotScreenY = zoomPivot.y * tileSize + offsetY;
+              
+              tileSize = newTileSize;
+              
+              // Recalcular el offset para mantener el pivote en la misma posición visual
+              offsetX = pivotScreenX - (zoomPivot.x * tileSize);
+              offsetY = pivotScreenY - (zoomPivot.y * tileSize);
+              
+              draw();
+            }
+          } else {
+            handleAction(e);
+          }
         }
       }
     });
 
-    canvas.addEventListener('mouseup', ()=>{ isDragging=false; dragButton=null; });
+    canvas.addEventListener('mouseup', ()=>{ 
+      isDragging=false; 
+      dragButton=null; 
+      zoomPivot = null; // Resetear el pivote de zoom al soltar el mouse
+    });
 
     // --- Zoom con rueda ---
     canvas.addEventListener('wheel', e=>{
@@ -662,7 +743,7 @@
       if(e.ctrlKey && e.key==='z'){ e.preventDefault(); undo(); }
       if(e.ctrlKey && e.key==='y'){ e.preventDefault(); redo(); }
       if(!e.ctrlKey){
-        if(e.key==='1') setTool('move');
+        if(e.key==='1') setTool('zoom');
         if(e.key==='2') setTool('paint');
         if(e.key==='3') setTool('erase');
         if(e.key==='4') openEventModal();
@@ -680,6 +761,9 @@
     draw();
     updateViewModeUI(); // inicializar radios
     updateDeleteButtons(); // inicializar estado de botones de eliminación
+    
+    // Establecer la herramienta de pintar como activa por defecto
+    setTool('paint');
   </script>
 </body>
 </html>
