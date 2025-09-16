@@ -1,1 +1,30 @@
-xd
+{
+  "map": {},
+  "textures": [
+    "http://imgfz.com/i/o6vYZ1T.jpeg",
+    "https://i.pinimg.com/originals/3d/4c/8a/3d4c8a24e95be05d7cbd2027920bdf1f.png",
+    "https://img.freepik.com/premium-vector/pixel-background-concept-games-background-vector-illustration_652575-1371.jpg",
+    "https://i.pinimg.com/564x/1c/22/3e/1c223ed1e8871fb269c201d2fbe7f1f1.jpg",
+    "https://i.pinimg.com/736x/3f/b5/b7/3fb5b7dee6f17d5ad2186780d3c1a4a2.jpg",
+    "https://static.wikia.nocookie.net/totalminer/images/8/84/Texture_Crate64.png/revision/latest?cb=20200220065302",
+    "https://img.freepik.com/vector-premium/lava-pixel-art-textura-magma-mosaico-patron-costuras-sprite-8-bits_418367-283.jpg",
+    "https://thumbs.dreamstime.com/b/modelo-incons%C3%BAtil-ondulado-anaranjado-33417761.jpg",
+    "http://imgfz.com/i/yLPoSvi.jpeg",
+    "https://static.vecteezy.com/system/resources/thumbnails/003/591/296/small/wooden-white-soft-surface-background-plank-wood-texture-vector.jpg",
+    "https://img.freepik.com/vector-premium/muro-hormigon-oscuro-textura-fondo_278222-11865.jpg",
+    "https://i.pinimg.com/564x/a3/d1/9c/a3d19cd17a81c12be4bb7bcb2a6bd486.jpg",
+    "https://static.planetminecraft.com/files/image/minecraft/texture-pack/2023/194/16546550-pack_xl.webp",
+    "https://thumbs.dreamstime.com/b/lava-semitono-dise%C3%B1o-moderno-fondo-camuflaje-de-p%C3%ADxeles-brillantes-rojo-intenso-p%C3%ADxel-brillante-ne%C3%B3n-patr%C3%B3n-vector-sin-214928901.jpg",
+    "https://static.wikia.nocookie.net/mario/images/5/58/180px-New-super-mario-bros-2-artwork-37.jpeg/revision/latest?cb=20121206144522&path-prefix=es"
+  ],
+  "tags": [
+    "piso",
+    "ladrillo",
+    "caja",
+    "lava",
+    "fango",
+    "transparente",
+    "magma"
+  ],
+  "viewMode": "static"
+}
