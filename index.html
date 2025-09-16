@@ -2,8 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Tilemap Editor</title>
-  <link rel="icon" href="https://i.ibb.co/gBNkzrX/Gemini-Generated-Image-91ql691ql691ql69.png" type="image/png">
+  <title>Tilemap Editor Mejorado</title>
   <style>
     body { margin: 0; display: flex; font-family: sans-serif; background: #eee; color: #000; }
     #canvas { flex: 1; background: #eee; cursor: crosshair; }
@@ -36,8 +35,53 @@
     #shortcuts .shortcut .tag { font-size: 10px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; }
     .section-content { display: block; }
     .section-content.collapsed { display: none; }
-    #eventModal, #confirmModal { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; }
-    #eventModal .content, #confirmModal .content { background:#fff; padding:20px; border-radius:10px; text-align:center; }
+    #eventModal, #confirmModal, #standardConfigModal { 
+      position: fixed; top:0; left:0; width:100%; height:100%; 
+      background:rgba(0,0,0,0.5); display:none; align-items:center; justify-content:center; 
+    }
+    #eventModal .content, #confirmModal .content, #standardConfigModal .content { 
+      background:#fff; padding:20px; border-radius:10px; text-align:center; 
+    }
+    .gold-button {
+      background: linear-gradient(to bottom, #ffd700, #daa520);
+      color: #000;
+      font-weight: bold;
+      border: 1px solid #b8860b;
+      border-radius: 5px;
+      padding: 8px 12px;
+      margin: 10px 0;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    .gold-button:hover {
+      background: linear-gradient(to bottom, #daa520, #b8860b);
+    }
+    .delete-btn {
+      background: #ff4444;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 5px 8px;
+      margin-top: 5px;
+      cursor: pointer;
+      font-size: 12px;
+      width: 100%;
+    }
+    .delete-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+    .tag-item {
+      display: inline-block;
+      margin: 2px;
+    }
+    .tag-item button {
+      padding: 5px;
+      margin: 2px;
+    }
+    .tag-item button.selected {
+      border: 2px solid red;
+    }
   </style>
 </head>
 <body>
@@ -51,6 +95,7 @@
       <div id="textures-content" class="section-content">
         <input type="text" id="bbcodeInput" placeholder="[img]http://...[/img]">
         <button onclick="importTexture()">Importar</button>
+        <button class="delete-btn" id="deleteTextureBtn" onclick="deleteSelectedTexture()" disabled>Eliminar Textura Seleccionada</button>
         <div id="textures"></div>
       </div>
     </div>
@@ -62,6 +107,7 @@
       <div id="tags-content" class="section-content">
         <input type="text" id="tagInput" placeholder="Escribir tag">
         <button onclick="addTag()">Agregar Tag</button>
+        <button class="delete-btn" id="deleteTagBtn" onclick="deleteSelectedTag()" disabled>Eliminar Tag Seleccionado</button>
         <div id="tags"></div>
       </div>
     </div>
@@ -105,6 +151,12 @@
         <label><input type="radio" name="viewMode" value="xy" onchange="setViewMode(this.value)"> Vista desplazada en eje X y Y</label>
       </div>
     </div>
+    <div class="section">
+      <h3>Configuración Estándar</h3>
+      <div class="section-content">
+        <button class="gold-button" onclick="loadStandardConfig()">Usar Configuración Estándar</button>
+      </div>
+    </div>
   </div>
 
   <!-- Modales -->
@@ -125,6 +177,17 @@
       <div style="margin-top:10px;">
         <button onclick="doClearAll()">Sí</button>
         <button onclick="closeConfirmModal()">No</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="standardConfigModal">
+    <div class="content">
+      <h3>¿Seguro que deseas cargar la configuración estándar?</h3>
+      <p>Se limpiará todo lo dibujado en el tilemap.</p>
+      <div style="margin-top:10px;">
+        <button onclick="doLoadStandardConfig()">Sí</button>
+        <button onclick="closeStandardConfigModal()">No</button>
       </div>
     </div>
   </div>
@@ -216,12 +279,33 @@
         img.onload=()=>draw();
         textures.push({url,img});
         updateTexturesUI();
+        document.getElementById('bbcodeInput').value = '';
+      } else {
+        alert('Formato incorrecto. Usa: [img]URL[/img]');
+      }
+    }
+
+    function deleteSelectedTexture() {
+      if (!selectedTexture) {
+        alert('No hay ninguna textura seleccionada');
+        return;
+      }
+      
+      if (confirm("¿Estás seguro de que quieres eliminar esta textura?")) {
+        const index = textures.findIndex(t => t.url === selectedTexture.url);
+        if (index !== -1) {
+          textures.splice(index, 1);
+          selectedTexture = null;
+          updateTexturesUI();
+          updateDeleteButtons();
+        }
       }
     }
 
     function updateTexturesUI(){
       const div=document.getElementById('textures');
       div.innerHTML='';
+      
       textures.forEach((tex,i)=>{
         const el=document.createElement('img');
         el.src=tex.url;
@@ -229,6 +313,7 @@
           selectedTexture=tex;
           document.querySelectorAll('#textures img').forEach(im=>im.classList.remove('selected'));
           el.classList.add('selected');
+          updateDeleteButtons();
           checkSelectedShortcut();
         };
         div.appendChild(el);
@@ -238,26 +323,56 @@
     function addTag(){
       const input=document.getElementById('tagInput').value.trim();
       if(input){
+        // Evitar tags duplicados
+        if (tags.includes(input)) {
+          alert('Este tag ya existe');
+          return;
+        }
+        
         tags.push(input);
         updateTagsUI();
         document.getElementById('tagInput').value='';
+      }
+    }
+
+    function deleteSelectedTag() {
+      if (!selectedTag) {
+        alert('No hay ningún tag seleccionado');
+        return;
+      }
+      
+      if (confirm("¿Estás seguro de que quieres eliminar este tag?")) {
+        const index = tags.indexOf(selectedTag);
+        if (index !== -1) {
+          tags.splice(index, 1);
+          selectedTag = null;
+          updateTagsUI();
+          updateDeleteButtons();
+        }
       }
     }
     
     function updateTagsUI(){
       const div=document.getElementById('tags');
       div.innerHTML='';
-      tags.forEach(tag=>{
+      
+      tags.forEach((tag, i)=>{
         const btn=document.createElement('button');
         btn.textContent=tag;
         btn.onclick=()=>{
           selectedTag=tag;
-          document.querySelectorAll('#tags button').forEach(b=>b.style.border='');
-          btn.style.border='2px solid red';
+          document.querySelectorAll('#tags button').forEach(b=>b.classList.remove('selected'));
+          btn.classList.add('selected');
+          updateDeleteButtons();
           checkSelectedShortcut();
         };
         div.appendChild(btn);
       });
+    }
+
+    function updateDeleteButtons() {
+      document.getElementById('deleteTextureBtn').disabled = !selectedTexture;
+      document.getElementById('deleteTagBtn').disabled = !selectedTag;
     }
 
     function addShortcut(){
@@ -303,14 +418,17 @@
           // Seleccionar el tag correspondiente
           selectedTag = shortcut.tag;
           document.querySelectorAll('#tags button').forEach(btn => {
-            btn.style.border = '';
+            btn.classList.remove('selected');
             if (btn.textContent === selectedTag) {
-              btn.style.border = '2px solid red';
+              btn.classList.add('selected');
             }
           });
           
           // Cambiar a herramienta de pintar
           setTool('paint');
+          
+          // Actualizar botones de eliminación
+          updateDeleteButtons();
           
           // Resaltar el atajo seleccionado
           checkSelectedShortcut();
@@ -364,6 +482,57 @@
         content.classList.add('collapsed');
         btn.textContent = '+';
       }
+    }
+
+    function loadStandardConfig() {
+      document.getElementById('standardConfigModal').style.display = 'flex';
+    }
+
+    function closeStandardConfigModal() {
+      document.getElementById('standardConfigModal').style.display = 'none';
+    }
+
+    function doLoadStandardConfig() {
+      fetch('https://raw.githubusercontent.com/papelerio/D/maine/est%C3%A1ndar.JSON')
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('No se pudo cargar la configuración estándar');
+          }
+          return response.json();
+        })
+        .then(data => {
+          // Limpiar el mapa actual
+          mapData = {};
+          
+          // Cargar los datos del JSON estándar
+          if (data.map) mapData = data.map;
+          if (data.textures) {
+            textures = [];
+            data.textures.forEach(url => {
+              const img = new Image();
+              img.src = url;
+              img.onload = () => draw();
+              textures.push({url, img});
+            });
+          }
+          if (data.tags) tags = data.tags;
+          if (data.viewMode) viewMode = data.viewMode;
+          
+          // Actualizar la interfaz
+          selectedTexture = null;
+          selectedTag = null;
+          updateTexturesUI();
+          updateTagsUI();
+          updateViewModeUI();
+          updateDeleteButtons();
+          draw();
+          
+          closeStandardConfigModal();
+        })
+        .catch(error => {
+          alert('Error al cargar la configuración estándar: ' + error.message);
+          closeStandardConfigModal();
+        });
     }
 
     // --- Eventos de mouse ---
@@ -483,6 +652,7 @@
           textures.push({url,img});
         });
         updateTexturesUI();
+        updateDeleteButtons();
         draw();
       };
       reader.readAsText(file);
@@ -509,6 +679,7 @@
 
     draw();
     updateViewModeUI(); // inicializar radios
+    updateDeleteButtons(); // inicializar estado de botones de eliminación
   </script>
 </body>
 </html>
